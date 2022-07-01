@@ -17,6 +17,7 @@ type UserController interface {
 	Insert(context *gin.Context)
 	Update(context *gin.Context)
 	Delete(context *gin.Context)
+	GetAllUsers(c *gin.Context)
 }
 
 type userController struct {
@@ -100,4 +101,21 @@ func (c *userController) Delete(context *gin.Context) {
 	c.userService.Delete(user)
 	res := helper.BuildResponse(true, "Deleted", helper.EmptyObj{})
 	context.JSON(http.StatusOK, res)
+}
+
+func (c *userController) GetAllUsers(context *gin.Context) {
+	pagination := helper.GeneratePaginationFromRequest(context)
+	var user entity.User
+	userLists, err := c.userService.GetAllUsers(&user, &pagination)
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+
+	}
+	context.JSON(http.StatusOK, gin.H{
+		"data": userLists,
+	})
 }

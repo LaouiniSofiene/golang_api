@@ -13,6 +13,7 @@ type UserRepository interface {
 	FindUserById(userID uint64) entity.User
 	IsDuplicateEmail(email string) (tx *gorm.DB)
 	FindByEmail(email string) entity.User
+	GetAllUsers(u *entity.User, p *entity.Pagination) (*[]entity.User, error)
 }
 
 type userConnection struct {
@@ -62,4 +63,16 @@ func (db *userConnection) FindByEmail(email string) entity.User {
 	var user entity.User
 	db.connection.Where("email = ?", email).Take(&user)
 	return user
+}
+
+func (db *userConnection) GetAllUsers(user *entity.User, pagination *entity.Pagination) (*[]entity.User, error) {
+	var users []entity.User
+	offset := (pagination.Page - 1) * pagination.Limit
+	queryBuider := db.connection.Limit(pagination.Limit).Offset(offset).Order(pagination.Sort)
+	result := queryBuider.Model(&entity.User{}).Where(user).Find(&users)
+	if result.Error != nil {
+		msg := result.Error
+		return nil, msg
+	}
+	return &users, nil
 }
